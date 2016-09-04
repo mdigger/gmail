@@ -199,10 +199,4 @@ func TestInit(t *testing.T) {
 	if err := Init("config.json", "token.json"); err != nil {
 		t.Fatal(err)
 	}
-	Prompt = func(string) (string, error) {
-		return "4/qsE9rAbp7teRPu6Lou9J8JFGXtqPrUJeZUo73A-b5XQ", nil
-	}
-	if err := Init("config.json", "token2.json"); err != nil {
-		t.Fatal(err)
-	}
 }
