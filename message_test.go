@@ -194,9 +194,3 @@ func TestUnsupportedFormat(t *testing.T) {
 		t.Fatal("unsupported transform encoding")
 	}
 }
-
-func TestInit(t *testing.T) {
-	if err := Init("config.json", "token.json"); err != nil {
-		t.Fatal(err)
-	}
-}
