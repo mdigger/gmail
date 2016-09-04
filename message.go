@@ -20,48 +20,47 @@ import (
 	"google.golang.org/api/gmail/v1"
 )
 
-// Предопределенные ошибки, возвращаемые при попытке отослать сообщение.
+// Predefined error returned when trying to send a message.
 var (
-	// возвращается при попытке отослать пустое сообщение, без присоединенных
-	// файлов и без текста самого сообщения
+	// is returned if you try to send a blank message with no attached files and
+	// no text messages
 	ErrNoBody = errors.New("contents are undefined")
-	// ошибка не инициализированного сервиса GMail
+	// error not initialized the GMail
 	ErrServiceNotInitialized = errors.New("gmail service not initialized")
 )
 
-// Message описывает почтовое сообщение.
+// The Message describes an email message.
 type Message struct {
-	header textproto.MIMEHeader // заголовки
-	parts  map[string]*part     // список файлов по именам
+	header textproto.MIMEHeader // headers
+	parts  map[string]*part     // the list of file by names
 }
 
-// NewMessage формирует новое почтовое сообщение для отправки.
+// NewMessage creates a new email message to send.
 //
-// Сообщение всегда отправляется от имени авторизованного пользователя, так что
-// поле from может быть пустым или содержать строку "me". Если вы укажете в этом
-// поле другой адрес, то он будет подставлен в Reply-To и при ответе на это
-// сообщение будет подставлять этот адрес отправителя.
+// The message is always sent on behalf of an authorized user, so that the from
+// field can be empty or contain the string "me". If you set this field to a
+// different address, it will appear in the Reply-To and when you reply to this
+// message will use the sender's address.
 //
-// Почтовые адреса можно указывать в следующих видах (поддерживается разбор
-// имени и почтового адреса):
-// 	test@example.com
-// 	<test@example.com>
-// 	TestUser <test@example.com>
-// При разборе происходит проверка валидности формата почтового адреса.
-// Вы должны указать хотя бы один адрес для отправки (to или cc), иначе при
-// попытке отправки сообщения вернется ошибка.
+// You can specify email address in the following formats (supported by parsing
+// the name and email address):
 //
-// В качестве текста письма вы можете использовать текст или HTML — формат
-// сообщения определяется автоматически. Для гарантии, что формат будет
-// определен как HTML, рекомендуется обрамить текст тегом <html>.
-// При добавлении HTML-содержимого письма, его текстовый вариант, для поддержки
-// устаревших почтовых програм, добавится автоматически. При попытке добавить в
-// качестве текста письма бинарные данные вернется ошибка. Вы может передать
-// в качестве параметра текста письма nil, тогда письмо будет без текстового
-// представления.
+//	test@example.com
+//	<test@example.com>
+//	TestUser <test@example.com>
+//
+// Parsing checks the validity of the format of the email address. You must
+// specify at least one address to send (to or cc), or when trying to send
+// messages will return an error.
+//
+// You can use text or HTML message format is determined automatically. To
+// guarantee that the format will be specified as HTML, consider wrapping the
+// text with <html> tag. When adding the HTML content of the message, text
+// version, to support legacy mail program will be added automatically. When
+// you try to add as text message binary data will return an error. You can
+// set nil as a parameter to empty message body.
 func NewMessage(subject, from string, to, cc []string, body []byte) (*Message, error) {
 	var h = make(textproto.MIMEHeader)
-	// добавляем адрес от кого сообщение
 	if from != "" && from != "me" {
 		if mfrom, err := mail.ParseAddress(from); err == nil {
 			from := mfrom.String()
@@ -71,7 +70,6 @@ func NewMessage(subject, from string, to, cc []string, body []byte) (*Message, e
 			return nil, fmt.Errorf("from %v", err)
 		}
 	}
-	// добавляем адреса кому
 	if len(to) > 0 {
 		if addr, err := addrsList(to); err == nil {
 			h.Set("To", addr)
@@ -79,7 +77,6 @@ func NewMessage(subject, from string, to, cc []string, body []byte) (*Message, e
 			return nil, fmt.Errorf("to %v", err)
 		}
 	}
-	// добавляем адреса копии
 	if len(cc) > 0 {
 		if addr, err := addrsList(cc); err == nil {
 			h.Set("Сс", addr)
@@ -87,17 +84,13 @@ func NewMessage(subject, from string, to, cc []string, body []byte) (*Message, e
 			return nil, fmt.Errorf("cc %v", err)
 		}
 	}
-	// проверяем, что хотя бы одни адрес установлен
 	if h.Get("To") == "" && h.Get("Cc") == "" {
 		return nil, errors.New("no recipient specified")
 	}
-	// добавляем тему сообщения
 	if subject != "" {
 		h.Set("Subject", mime.QEncoding.Encode("utf-8", subject))
 	}
-	// инициализируем новое сообщение
 	var msg = &Message{header: h}
-	// добавляем текст сообщения
 	if len(body) > 0 {
 		if err := msg.SetBody(body); err != nil {
 			return msg, err
@@ -106,10 +99,10 @@ func NewMessage(subject, from string, to, cc []string, body []byte) (*Message, e
 	return msg, nil
 }
 
-const _body = "\000body" // имя файла с содержимым сообщения
+const _body = "\000body" // the file name with the contents of the message
 
-// Attach присоединяет к сообщению вложение в виде файла. Передача пустого
-// содержимого удалит файл с таким именем, если он раньше был добавлен.
+// Attach attaches to the message an attachment as a file. Passing an empty
+// content deletes the file with the same name if it was previously added.
 func (m *Message) Attach(name string, data []byte) error {
 	if len(data) == 0 {
 		if m.parts != nil {
@@ -117,15 +110,12 @@ func (m *Message) Attach(name string, data []byte) error {
 		}
 		return nil
 	}
-	// нормализуем имя файла, удаляя возможные пути
 	name = filepath.Base(name)
 	switch name {
 	case ".", "..", string(filepath.Separator):
 		return fmt.Errorf("bad file name: %v", name)
 	}
-	// формируем заголовок
 	var h = make(textproto.MIMEHeader)
-	// определяем тип содержимого файла
 	var contentType = mime.TypeByExtension(filepath.Ext(name))
 	if contentType == "" {
 		contentType = http.DetectContentType(data)
@@ -133,22 +123,18 @@ func (m *Message) Attach(name string, data []byte) error {
 	if contentType != "" {
 		h.Set("Content-Type", contentType)
 	}
-	// выбираем тип кодирования на основе типа содержимого
 	var coding = "quoted-printable"
 	if !strings.HasPrefix(contentType, "text") {
-		// проверяем, что содержимое сообщения текстовое
 		if name == _body {
 			return fmt.Errorf("unsupported body content type: %v", contentType)
 		}
 		coding = "base64"
 	}
 	h.Set("Content-Transfer-Encoding", coding)
-	// тип присоединения файла
 	if name != _body {
 		disposition := fmt.Sprintf("attachment; filename=%s", name)
 		h.Set("Content-Disposition", disposition)
 	}
-	// сохраняем файл под его именем в контексте сообщения
 	if m.parts == nil {
 		m.parts = make(map[string]*part)
 	}
@@ -159,8 +145,8 @@ func (m *Message) Attach(name string, data []byte) error {
 	return nil
 }
 
-// AddFile читает содержимое указанного в параметре файла и присоединяет его как
-// вложение к сообщению.
+// AddFile reads the contents of specified in the parameter file and attaches
+// it as an attachment to the message.
 func (m *Message) AddFile(filename string) error {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -169,66 +155,58 @@ func (m *Message) AddFile(filename string) error {
 	return m.Attach(filename, data)
 }
 
-// SetBody задает содержимое текста письма.
+// SetBody sets the contents of the text of the letter.
 //
-// В качестве текста письма вы можете использовать текст или HTML — формат
-// сообщения определяется автоматически. Для гарантии, что формат будет
-// определен как HTML, рекомендуется обрамить текст тегом <html>.
-// При добавлении HTML-содержимого письма, его текстовый вариант, для поддержки
-// устаревших почтовых програм, добавится автоматически. При попытке добавить в
-// качестве текста письма бинарные данные вернется ошибка. Вы может передать
-// в качестве параметра текста письма nil, тогда письмо будет без текстового
-// представления.
+// You can use text or HTML message format (is determined automatically). To
+// guarantee that the format will be specified as HTML, consider wrapping the
+// text with <html> tag. When adding the HTML content, text version, to support
+// legacy mail program will be added automatically. When you try to add as
+// message binary data will return an error. You can pass as a parameter the nil,
+// then the message will be without a text submission.
 func (m *Message) SetBody(data []byte) error {
 	return m.Attach(_body, data)
 }
 
-// Has возвращает true, если файл с таким именем зарегистрирован в сообщении
-// в виде вложения.
+// Has returns true if a file with that name was in the message as an attachment.
 func (m *Message) Has(name string) bool {
 	_, ok := m.parts[name]
 	return ok
 }
 
-// writeTo формирует и записывает текстовое представление постового сообщения.
+// writeTo generates and writes the text representation of mail messages.
 func (m *Message) writeTo(w io.Writer) error {
 	if len(m.parts) == 0 {
-		return ErrNoBody // ничего нет
+		return ErrNoBody
 	}
 	var h = make(textproto.MIMEHeader)
 	h.Set("MIME-Version", "1.0")
 	h.Set("X-Mailer", "REST GMailer (github.com/mdigger/gmail)")
-	// копируем основной заголовок сообщения
+	// copy the primary header of the message
 	for k, v := range m.header {
 		h[k] = v
 	}
-	// проверяем, что определено только основное сообщение, без файлов
+	// check that only defined the basic message, no file
 	if len(m.parts) == 1 && m.Has(_body) {
-		body := m.parts[_body] // выбираем содержимое сообщения
-		// объединяем заголовок сообщения и файла с текстом
+		body := m.parts[_body]
 		for k, v := range body.header {
 			h[k] = v
 		}
-		// записываем объединенный заголовок
 		if err := writeHeader(w, h); err != nil {
 			return err
 		}
-		// записываем содержимое сообщения
 		if err := body.writeData(w); err != nil {
 			return err
 		}
 		return nil
 	}
-	// есть присоединенные файлы
+	// there are attached files
 	var mw = multipart.NewWriter(w)
 	defer mw.Close()
 	h.Set("Content-Type",
 		fmt.Sprintf("multipart/mixed; boundary=%s", mw.Boundary()))
-	// записываем объединенный заголовок
 	if err := writeHeader(w, h); err != nil {
 		return err
 	}
-	// записываем присоединенные файлы и основной текст сообщения
 	for _, p := range m.parts {
 		pw, err := mw.CreatePart(p.header)
 		if err != nil {
@@ -241,38 +219,32 @@ func (m *Message) writeTo(w io.Writer) error {
 	return nil
 }
 
-// Send отправляет сообщение через GMail.
+// Send sends the message through GMail.
 //
-// Перед отправкой необходимо инициализировать сервис, вызвав функцию
-// Init().
+// Before sending, you must initialize the service by calling the Init function.
 func (m *Message) Send() error {
-	// проверяем, что сервис инициализирован
 	if gmailService == nil || gmailService.Users == nil {
 		return ErrServiceNotInitialized
 	}
-	// формируем сообщение в формате mail
 	var buf bytes.Buffer
 	if err := m.writeTo(&buf); err != nil {
 		return err
 	}
-	// кодируем содержимое сообщения в формат Base64
 	body := base64.RawURLEncoding.EncodeToString(buf.Bytes())
-	// формируем сообщение в формате GMail
 	var gmailMessage = &gmail.Message{Raw: body}
-	// отправляем сообщение на сервер GMail
 	_, err := gmailService.Users.Messages.Send("me", gmailMessage).Do()
-	return err // возвращаем статус отправки сообщения
+	return err
 }
 
-// part описывает часть почтового сообщения: файл или текст сообщения.
+// part describes part email message: the file or message.
 type part struct {
-	header textproto.MIMEHeader // заголовки
-	data   []byte               // содержимое
+	header textproto.MIMEHeader // headers
+	data   []byte               // content
 }
 
-// writeData записывает содержимое файла сообщения, поддерживая заданную
-// систему кодирования. На данный момент реализованы только quoted-printable и
-// base64 кодировки. Для всех остальный возвращается ошибка.
+// writeData writes the contents of the message file with maintain the coding
+// system. At the moment only implemented quoted-printable and base64 encoding.
+// For all others, an error is returned.
 func (p *part) writeData(w io.Writer) (err error) {
 	switch name := p.header.Get("Content-Transfer-Encoding"); name {
 	case "quoted-printable":
@@ -289,10 +261,9 @@ func (p *part) writeData(w io.Writer) (err error) {
 	return err
 }
 
-// writeHeader записывает заголовок сообщения или файла. Ключи заголовка
-// сортируются в алфавитном порядке.
+// writeHeader writes the header of the message or file. The keys of the header
+// are sorted alphabetically.
 func writeHeader(w io.Writer, h textproto.MIMEHeader) (err error) {
-	// сортируем ключи, чтобы выводить их в одинаковом виде
 	var keys = make([]string, 0, len(h))
 	for k := range h {
 		keys = append(keys, k)
@@ -305,11 +276,11 @@ func writeHeader(w io.Writer, h textproto.MIMEHeader) (err error) {
 			}
 		}
 	}
-	_, err = fmt.Fprintf(w, "\r\n") // добавляем отступ от заголовка
+	_, err = fmt.Fprintf(w, "\r\n") // add the offset from the header
 	return err
 }
 
-// addrsList возвращает строку с адресами, сформированными из списка адресов.
+// addrsList returns a string with the addresses generated from the address list.
 func addrsList(addrs []string) (string, error) {
 	mails, err := mail.ParseAddressList(strings.Join(addrs, ", "))
 	if err != nil {

@@ -7,26 +7,26 @@ import (
 )
 
 func Example() {
-	// инициализируем библиотеку
+	// initialize the library
 	if err := gmail.Init("config.json", "token.json"); err != nil {
 		log.Fatal(err)
 	}
-	// создаем новое сообщение
+	// create a new message
 	msg, err := gmail.NewMessage(
-		"Subject", // тема сообщения
-		"me",      // от кого
-		[]string{"Test User <test@example.com>"}, // кому
-		nil, // копия
-		[]byte(`<html><p>body text</p></html>`), // текст сообщения
+		"Subject", // subject
+		"me",      // from
+		[]string{"Test User <test@example.com>"}, // to
+		nil, // cc
+		[]byte(`<html><p>body text</p></html>`), // message body
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// присоединяем файл
+	// attach file
 	if err = msg.AddFile("README.md"); err != nil {
 		log.Fatal(err)
 	}
-	// отправляем сообщение
+	// send a message
 	if err := msg.Send(); err != nil {
 		log.Fatal(err)
 	}

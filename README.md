@@ -4,11 +4,11 @@
 [![Build Status](https://travis-ci.org/mdigger/gmail.svg?branch=master)](https://travis-ci.org/mdigger/gmail)
 [![Coverage Status](https://coveralls.io/repos/github/mdigger/gmail/badge.svg)](https://coveralls.io/github/mdigger/gmail?branch=master)
 
-Библиотека для отправки сообщений через Google GMail.
+Library to send messages using Google GMail.
 
-Для работы библиотеки необходимо зарегистрировать приложение на сервере Google и получить конфигурационный файл, который будет использоваться для авторизации. При первой инициализации приложения в консоль будет выведен URL, по которому необходимо перейти и получить авторизационный код. Этот код нужно будет ввести в ответ приложению и выполнение продолжится. Данную функцию необходимо выполнить один раз: в дальнейшем ключи авторизации сохранятся в файлах.
+You need to register the app on the Google server and get the configuration file that will be used for authorization. When you first initialize the application in the console will display the URL you need to go and get the authorization code. This code must be entered in response to the application and execution will continue. This function must be performed once the authorization keys stored in files.
 
-### Пример отправки сообщения
+### Message send example
 
 	package main
 
@@ -20,33 +20,33 @@
 	)
 
 	func main() {
-		// инициализируем библиотеку
+		// initialize the library
 		if err := gmail.Init("config.json", "token.json"); err != nil {
 			log.Fatal(err)
 		}
-		// создаем новое сообщение
+		// create a new message
 		msg, err := gmail.NewMessage(
-			"Subject", // тема сообщения
-			"me",      // от кого
-			[]string{"Test User <test@example.com>"}, // кому
-			nil, // копия
-			[]byte(`<html><p>body text</p></html>`), // текст сообщения
+			"Subject", // subject
+			"me",      // from
+			[]string{"Test User <test@example.com>"}, // to
+			nil, // cc
+			[]byte(`<html><p>body text</p></html>`), // message body
 		)
 		if err != nil {
 			log.Fatal(err)
 		}
-		// присоединяем файл
+		// attach file
 		if err = msg.AddFile("README.md"); err != nil {
 			log.Fatal(err)
 		}
-		// отправляем сообщение
+		// send a message
 		if err := msg.Send(); err != nil {
 			log.Fatal(err)
 		}
 	}
 
 
-### Подробнее о процедуре регистрации
+### Registration procedure
 
 - Use [this wizard](https://console.developers.google.com/start/api?id=gmail) to create or select a project in the Google Developers Console and automatically turn on the API. Click **Continue**, then **Go to credentials**.
 - On the **Add credentials to your project** page, click the **Cancel** button.
