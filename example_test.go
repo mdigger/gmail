@@ -14,23 +14,24 @@ func Example() {
 	}
 	// создаем новое сообщение
 	msg, err := gmail.NewMessage(
-		"Subject",                                // тема сообщения
-		"sender@example.com",                     // от кого
+		"Subject", // тема сообщения
+		"me",      // от кого
 		[]string{"Test User <test@example.com>"}, // кому
 		nil, // копия
+		[]byte(`<html><p>body text</p></html>`), // текст сообщения
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// задаем текст письма в формате HTML или текст
-	msg.Body([]byte(`<html><p>body text</p></html>`))
 	// присоединяем файл
 	var filename = "README.md"
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
-	msg.File(filename, data)
+	if err = msg.File(filename, data); err != nil {
+		log.Fatal(err)
+	}
 	// отправляем сообщение
 	if err := msg.Send(); err != nil {
 		log.Fatal(err)

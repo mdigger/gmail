@@ -12,11 +12,10 @@ import (
 	"net/http"
 	"net/mail"
 	"net/textproto"
-	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 
-	"github.com/kr/pretty"
 	"google.golang.org/api/gmail/v1"
 )
 
@@ -36,15 +35,17 @@ type Message struct {
 }
 
 // NewMessage формирует новое почтовое сообщение для отправки.
-func NewMessage(subject, from string, to, cc []string) (*Message, error) {
+func NewMessage(subject, from string, to, cc []string, body []byte) (*Message, error) {
 	var h = make(textproto.MIMEHeader)
 	// добавляем адрес от кого сообщение
-	if mfrom, err := mail.ParseAddress(from); err == nil {
-		from := mfrom.String()
-		h.Set("From", from)
-		h.Set("Reply-To", from)
-	} else if err.Error() != "mail: no address" {
-		return nil, fmt.Errorf("from %v", err)
+	if from != "" && from != "me" {
+		if mfrom, err := mail.ParseAddress(from); err == nil {
+			from := mfrom.String()
+			h.Set("From", from)
+			h.Set("Reply-To", from)
+		} else if err.Error() != "mail: no address" {
+			return nil, fmt.Errorf("from %v", err)
+		}
 	}
 	// добавляем адреса кому
 	if len(to) > 0 {
@@ -64,33 +65,44 @@ func NewMessage(subject, from string, to, cc []string) (*Message, error) {
 	}
 	// проверяем, что хотя бы одни адрес установлен
 	if h.Get("To") == "" && h.Get("Cc") == "" {
-		pretty.Println(h)
 		return nil, errors.New("no recipient specified")
 	}
 	// добавляем тему сообщения
 	if subject != "" {
 		h.Set("Subject", mime.QEncoding.Encode("utf-8", subject))
 	}
-	return &Message{header: h}, nil
+	// инициализируем новое сообщение
+	var msg = &Message{header: h}
+	// добавляем текст сообщения
+	if len(body) > 0 {
+		if err := msg.Body(body); err != nil {
+			return msg, err
+		}
+	}
+	return msg, nil
 }
 
 const _body = "\000body" // имя файла с содержимым сообщения
 
 // File присоединяет к сообщению новый файл. Передача пустого содержимого
-// файла удалить файл с таким же именем, если он раньше был добавлен.
+// файла удалит файл с таким именем, если он раньше был добавлен.
 func (m *Message) File(name string, data []byte) error {
 	if len(data) == 0 {
-		delete(m.parts, name)
+		if m.parts != nil {
+			delete(m.parts, name)
+		}
 		return nil
 	}
 	// нормализуем имя файла, удаляя возможные пути
-	if name = path.Base(name); name == "." {
-		return errors.New("bad file name")
+	name = filepath.Base(name)
+	switch name {
+	case ".", "..", string(filepath.Separator):
+		return fmt.Errorf("bad file name: %v", name)
 	}
 	// формируем заголовок
 	var h = make(textproto.MIMEHeader)
 	// определяем тип содержимого файла
-	var contentType = mime.TypeByExtension(path.Ext(name))
+	var contentType = mime.TypeByExtension(filepath.Ext(name))
 	if contentType == "" {
 		contentType = http.DetectContentType(data)
 	}
@@ -124,7 +136,7 @@ func (m *Message) File(name string, data []byte) error {
 }
 
 // Body добавляет в почтовое сообщение текст. Повторный вызов данной функции
-// приведет у перезаписи теста сообщения. Для сброса текста сообщения можно
+// приведет к перезаписи текста сообщения. Для сброса текста сообщения можно
 // передать пустые данные.
 //
 // Текст должен быть в формате text/plain или text/html (определяется
@@ -198,8 +210,7 @@ func (m *Message) writeTo(w io.Writer) error {
 // Send отправляет сообщение через GMail.
 //
 // Перед отправкой необходимо инициализировать сервис, вызвав функцию
-// gmail.Init(), которая должна выполняться до старта сервера, потому что может
-// потребовать ввода кода ответа при первой инициализации сервиса.
+// Init().
 func (m *Message) Send() error {
 	// проверяем, что сервис инициализирован
 	if gmailService == nil || gmailService.Users == nil {
@@ -223,11 +234,6 @@ func (m *Message) Send() error {
 type part struct {
 	header textproto.MIMEHeader // заголовки
 	data   []byte               // содержимое
-}
-
-// writeHeader записывает заголовок части сообщения.
-func (p *part) writeHeader(w io.Writer) error {
-	return writeHeader(w, p.header)
 }
 
 // writeData записывает содержимое файла сообщения, поддерживая заданную
