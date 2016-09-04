@@ -5,8 +5,16 @@ notifications:
   email: false
 install:
 - go get golang.org/x/tools/cmd/cover
-# - go get github.com/mattn/goveralls
+- go get github.com/mattn/goveralls
 - go get -t -v ./...
 script:
 - go test -v -race -covermode=atomic -coverprofile=coverage.out
-# - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+- $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken
+  $COVERALLS_TOKEN
+before_install:
+- openssl aes-256-cbc -K $encrypted_df390bd43a3f_key -iv $encrypted_df390bd43a3f_iv
+  -in tokens.tar.enc -out tokens.tar -d
+- tar xvf tokens.tar
+env:
+  global:
+    secure: 3CyNrkxf3CIXJgp64ygsjEVnKofnFMNNgpkBJ1euEsRMiwMWBjTKIt32ci9ZedYdR8x93EsExbGJvAW0ylq6AAxwYTgPeFLqO++FXI78RpgsdcTUJLR/MfWNc8UwqNXzYsM72Igu0pHK/fM2M9zPNfMfFwsPwz5pCS6/Df0QtoF9Y5E0z8l0EaQFURhslf+lNEB6zD/N9fMJX3z0AnvL3FOr3Lyt6/QqpeJtsOudQe9GEU8dkYNC1SboT08XTVq9WXgxFvV55QxkGiIDrrHjUmvcqsGXSwzwz6A6cfpQXcYv+0Uh67YEmG6G5FCdYBjMSe4lspUCgIr4+JQFG0eJYM4gVFhEGOBtnhBzgNU/DuTRG5TacTRLhmzQgui33U+G7FjpLg+YtDOktQVv4UOvBtM0feQt82vaseaVs3AoH/H6Wnd1KQ+OI/AkBfkJcK++gxJ/RtxMQSZUU/P37APWXvsQoUue5rJX57eSA/QM4QFh1ftElAJmjun9c+ZH+WJg7l0S6Nr9sCPC7NDfBmkBpm30KpgNiV9GTQax74h/AjZ8MBc0p4kyKfdBVofGse7w+QUNfIgtJykRUXPAG8tgnmoUEuI00KSfImrYSO6F5kUmuKLuFf5GXedBxy/9pIe1Xah0EiE5zOLS8euIinCPdftWusQshmdSftQY53+Sai0=

@@ -1,5 +1,9 @@
 # Gmail sender
 
+[![GoDoc](https://godoc.org/github.com/mdigger/gmail?status.svg)](https://godoc.org/github.com/mdigger/gmail)
+[![Build Status](https://travis-ci.org/mdigger/gmail.svg?branch=master)](https://travis-ci.org/mdigger/gmail)
+[![Coverage Status](https://coveralls.io/repos/github/mdigger/gmail/badge.svg)](https://coveralls.io/github/mdigger/gmail?branch=master)
+
 Библиотека для отправки сообщений через Google GMail.
 
 Для работы библиотеки необходимо зарегистрировать приложение на сервере Google и получить конфигурационный файл, который будет использоваться для авторизации. При первой инициализации приложения в консоль будет выведен URL, по которому необходимо перейти и получить авторизационный код. Этот код нужно будет ввести в ответ приложению и выполнение продолжится. Данную функцию необходимо выполнить один раз: в дальнейшем ключи авторизации сохранятся в файлах.
