@@ -45,6 +45,10 @@ func TestMessageText(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	err = msg.AddFile("README.md")
+	if err != nil {
+		t.Error(err)
+	}
 
 	// pretty.Println(msg)
 
