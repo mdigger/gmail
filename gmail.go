@@ -87,7 +87,7 @@ func Init(config, token string) error {
 	}
 	if err != nil {
 		authURL := cfg.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-		// the requested authorization code
+		// request authorization code
 		code, err := Prompt(authURL)
 		if err != nil {
 			return err
