@@ -22,7 +22,7 @@ func TestMessageText(t *testing.T) {
 	}
 	// err = msg.Body([]byte(`text body`))
 	// err = msg.Body([]byte(`<p>html body</p>`))
-	err = msg.Body(html)
+	err = msg.SetBody(html)
 	if err != nil {
 		t.Error(err)
 	}

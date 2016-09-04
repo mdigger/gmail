@@ -99,7 +99,7 @@ func NewMessage(subject, from string, to, cc []string, body []byte) (*Message, e
 	var msg = &Message{header: h}
 	// добавляем текст сообщения
 	if len(body) > 0 {
-		if err := msg.Body(body); err != nil {
+		if err := msg.SetBody(body); err != nil {
 			return msg, err
 		}
 	}
@@ -159,9 +159,9 @@ func (m *Message) Attach(name string, data []byte) error {
 	return nil
 }
 
-// File читает содержимое указанного в параметре файла и присоединяет его как
+// AddFile читает содержимое указанного в параметре файла и присоединяет его как
 // вложение к сообщению.
-func (m *Message) File(filename string) error {
+func (m *Message) AddFile(filename string) error {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
@@ -169,7 +169,7 @@ func (m *Message) File(filename string) error {
 	return m.Attach(filename, data)
 }
 
-// Body задает содержимое текста письма.
+// SetBody задает содержимое текста письма.
 //
 // В качестве текста письма вы можете использовать текст или HTML — формат
 // сообщения определяется автоматически. Для гарантии, что формат будет
@@ -179,7 +179,7 @@ func (m *Message) File(filename string) error {
 // качестве текста письма бинарные данные вернется ошибка. Вы может передать
 // в качестве параметра текста письма nil, тогда письмо будет без текстового
 // представления.
-func (m *Message) Body(data []byte) error {
+func (m *Message) SetBody(data []byte) error {
 	return m.Attach(_body, data)
 }
 

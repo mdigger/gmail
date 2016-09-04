@@ -23,7 +23,7 @@ func Example() {
 		log.Fatal(err)
 	}
 	// присоединяем файл
-	if err = msg.File("README.md"); err != nil {
+	if err = msg.AddFile("README.md"); err != nil {
 		log.Fatal(err)
 	}
 	// отправляем сообщение
