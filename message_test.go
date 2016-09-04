@@ -26,22 +26,22 @@ func TestMessageText(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = msg.File("test_file.html", html)
+	err = msg.Attach("test_file.html", html)
 	if err != nil {
 		t.Error(err)
 	}
-	err = msg.File("test_file.txt", text)
+	err = msg.Attach("test_file.txt", text)
 	if err != nil {
 		t.Error(err)
 	}
-	err = msg.File("test_file.txt", nil)
+	err = msg.Attach("test_file.txt", nil)
 	if err != nil {
 		t.Error(err)
 	}
 	if msg.Has("test_file.txt") {
 		t.Error("bad delete attachment")
 	}
-	err = msg.File("test_file.bin", bin)
+	err = msg.Attach("test_file.bin", bin)
 	if err != nil {
 		t.Error(err)
 	}
@@ -78,25 +78,25 @@ func TestBadAttach(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := msg.File("", html); err == nil {
+	if err := msg.Attach("", html); err == nil {
 		t.Error("bad file name")
 	}
 	if err := msg.writeTo(ioutil.Discard); err == nil {
 		t.Error("content undefined")
 	}
-	if err := msg.File("~/test/file.name", html); err != nil {
+	if err := msg.Attach("~/test/file.name", html); err != nil {
 		t.Error(err)
 	}
 	if err := msg.writeTo(ioutil.Discard); err != nil {
 		t.Error(err)
 	}
-	if err := msg.File("..", text); err == nil {
+	if err := msg.Attach("..", text); err == nil {
 		t.Error("bad file name 2")
 	}
-	if err := msg.File("~/test/file.name", text); err != nil {
+	if err := msg.Attach("~/test/file.name", text); err != nil {
 		t.Error(err)
 	}
-	if err := msg.File("~/test/file.name", bin); err != nil {
+	if err := msg.Attach("~/test/file.name", bin); err != nil {
 		t.Error(err)
 	}
 
@@ -137,11 +137,11 @@ func TestMessageSend(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = msg.File("test_file.html", html)
+	err = msg.Attach("test_file.html", html)
 	if err != nil {
 		t.Error(err)
 	}
-	err = msg.File("test_file.txt", text)
+	err = msg.Attach("test_file.txt", text)
 	if err != nil {
 		t.Error(err)
 	}

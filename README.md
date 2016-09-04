@@ -36,12 +36,7 @@
 			log.Fatal(err)
 		}
 		// присоединяем файл
-		var filename = "README.md"
-		data, err := ioutil.ReadFile(filename)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err = msg.File(filename, data); err != nil {
+		if err = msg.File("README.md"); err != nil {
 			log.Fatal(err)
 		}
 		// отправляем сообщение
