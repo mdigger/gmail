@@ -49,6 +49,10 @@ func TestMessageText(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	err = msg.AddFile("bad_file")
+	if err == nil {
+		t.Error("bad file")
+	}
 
 	// pretty.Println(msg)
 
@@ -165,3 +169,40 @@ var (
 </html>`)
 	bin = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 )
+
+func TestUnsupportedFormat(t *testing.T) {
+	msg, err := NewMessage(
+		"Subject",
+		"Dmitrys <dmitrys@xyzrd.com>",
+		[]string{
+			"I am<sedykh@gmail.com>",
+			"I am too <dmitrys@xyzrd.com>",
+			"d3@yandex.ru"},
+		[]string{"Дмитрий Седых <d3@yandex.ru>"},
+		nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = msg.Attach("test_file.html", html)
+	if err != nil {
+		t.Error(err)
+	}
+	msg.parts["test_file.html"].header.Set("Content-Transfer-Encoding", "bad")
+
+	if msg.writeTo(ioutil.Discard) == nil {
+		t.Fatal("unsupported transform encoding")
+	}
+}
+
+func TestInit(t *testing.T) {
+	if err := Init("config.json", "token.json"); err != nil {
+		t.Fatal(err)
+	}
+	Prompt = func(string) (string, error) {
+		return "4/qsE9rAbp7teRPu6Lou9J8JFGXtqPrUJeZUo73A-b5XQ", nil
+	}
+	if err := Init("config.json", "token2.json"); err != nil {
+		t.Fatal(err)
+	}
+}

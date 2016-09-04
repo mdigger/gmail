@@ -44,8 +44,17 @@ import (
 	"google.golang.org/api/gmail/v1"
 )
 
-// The message text that will be displayed to request the authorization code.
-var RequestMessage = "Go to the following link in your browser then type the authorization code:"
+//
+var (
+	// A function to request authorization code. As the parameter gets URL
+	// to get the authorization code. In response, shall return the
+	// obtained authorization code or an error.
+	Prompt func(authURL string) (code string, err error)
+	// The message text that will be displayed to request the authorization
+	// code. Used by embedded prompt function.
+	RequestMessage = "Go to the following link in your browser then type" +
+		" the authorization code:"
+)
 
 // Pointer to the initialized service.
 var gmailService *gmail.Service
@@ -78,9 +87,9 @@ func Init(config, token string) error {
 	}
 	if err != nil {
 		authURL := cfg.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-		fmt.Print(RequestMessage, '\n', authURL, '\n')
-		var code string
-		if _, err = fmt.Scan(&code); err != nil {
+		// the requested authorization code
+		code, err := Prompt(authURL)
+		if err != nil {
 			return err
 		}
 		oauthToken, err = cfg.Exchange(oauth2.NoContext, code)
@@ -99,4 +108,12 @@ func Init(config, token string) error {
 	}
 	gmailService, err = gmail.New(cfg.Client(context.Background(), oauthToken))
 	return err
+}
+
+func init() {
+	Prompt = func(authURL string) (code string, err error) {
+		fmt.Print(RequestMessage, '\n', authURL, '\n')
+		_, err = fmt.Scan(&code)
+		return
+	}
 }
