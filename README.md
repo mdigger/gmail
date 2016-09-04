@@ -1,0 +1,57 @@
+# Gmail sender
+
+Библиотека для отправки сообщений через Google GMail.
+
+Для работы библиотеки необходимо зарегистрировать приложение на сервере Google и получить конфигурационный файл, который будет использоваться для авторизации. При первой инициализации приложения в консоль будет выведен URL, по которому необходимо перейти и получить авторизационный код. Этот код нужно будет ввести в ответ приложению и выполнение продолжится. Данную функцию необходимо выполнить один раз: в дальнейшем ключи авторизации сохранятся в файлах.
+
+### Пример отправки сообщения
+
+	package main
+
+	import (
+		"io/ioutil"
+		"log"
+
+		"github.com/mdigger/gmail"
+	)
+
+	func main() {
+		// инициализируем библиотеку
+		if err := gmail.Init("config.json", "token.json"); err != nil {
+			log.Fatal(err)
+		}
+		msg, err := gmail.NewMessage(
+			"Subject",                                // тема сообщения
+			"sender@example.com",                     // от кого
+			[]string{"Test User <test@example.com>"}, // кому
+			nil, // копия
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// задаем текст письма в формате HTML или текст
+		msg.Body([]byte(`<html><p>body text</p></html>`))
+		// присоединяем файл
+		var filename = "README.md"
+		data, err := ioutil.ReadFile(filename)
+		if err != nil {
+			log.Fatal(err)
+		}
+		msg.File(filename, data)
+		// отправляем сообщение
+		if err := msg.Send(); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+
+### Подробнее о процедуре регистрации
+
+- Use [this wizard](https://console.developers.google.com/start/api?id=gmail) to create or select a project in the Google Developers Console and automatically turn on the API. Click **Continue**, then **Go to credentials**.
+- On the **Add credentials to your project** page, click the **Cancel** button.
+- At the top of the page, select the **OAuth consent screen** tab. Select an **Email address**, enter a **Product name** if not already set, and click the **Save** button.
+- Select the **Credentials** tab, click the **Create credentials** button and select **OAuth client ID**.
+- Select the application type **Other**, enter the name "Gmail API", and click the **Create** button.
+- Click **OK** to dismiss the resulting dialog.
+- Click the **Download JSON** button to the right of the client ID.
+- Move this file to your working directory and rename it `client_secret.json`.
