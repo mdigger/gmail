@@ -191,9 +191,7 @@ func (m *Message) writeTo(w io.Writer) error {
 		for k, v := range body.header {
 			h[k] = v
 		}
-		if err := writeHeader(w, h); err != nil {
-			return err
-		}
+		writeHeader(w, h)
 		if err := body.writeData(w); err != nil {
 			return err
 		}
@@ -204,9 +202,7 @@ func (m *Message) writeTo(w io.Writer) error {
 	defer mw.Close()
 	h.Set("Content-Type",
 		fmt.Sprintf("multipart/mixed; boundary=%s", mw.Boundary()))
-	if err := writeHeader(w, h); err != nil {
-		return err
-	}
+	writeHeader(w, h)
 	for _, p := range m.parts {
 		pw, err := mw.CreatePart(p.header)
 		if err != nil {
@@ -227,9 +223,7 @@ func (m *Message) Send() error {
 		return ErrServiceNotInitialized
 	}
 	var buf bytes.Buffer
-	if err := m.writeTo(&buf); err != nil {
-		return err
-	}
+	m.writeTo(&buf)
 	body := base64.RawURLEncoding.EncodeToString(buf.Bytes())
 	var gmailMessage = &gmail.Message{Raw: body}
 	_, err := gmailService.Users.Messages.Send("me", gmailMessage).Do()
@@ -263,7 +257,7 @@ func (p *part) writeData(w io.Writer) (err error) {
 
 // writeHeader writes the header of the message or file. The keys of the header
 // are sorted alphabetically.
-func writeHeader(w io.Writer, h textproto.MIMEHeader) (err error) {
+func writeHeader(w io.Writer, h textproto.MIMEHeader) {
 	var keys = make([]string, 0, len(h))
 	for k := range h {
 		keys = append(keys, k)
@@ -271,13 +265,10 @@ func writeHeader(w io.Writer, h textproto.MIMEHeader) (err error) {
 	sort.Strings(keys)
 	for _, k := range keys {
 		for _, v := range h[k] {
-			if _, err = fmt.Fprintf(w, "%s: %s\r\n", k, v); err != nil {
-				return err
-			}
+			fmt.Fprintf(w, "%s: %s\r\n", k, v)
 		}
 	}
-	_, err = fmt.Fprintf(w, "\r\n") // add the offset from the header
-	return err
+	fmt.Fprintf(w, "\r\n") // add the offset from the header
 }
 
 // addrsList returns a string with the addresses generated from the address list.
