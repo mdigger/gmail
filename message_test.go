@@ -194,3 +194,24 @@ func TestUnsupportedFormat(t *testing.T) {
 		t.Fatal("unsupported transform encoding")
 	}
 }
+
+func TestUnsupportedBodyFormat(t *testing.T) {
+	msg, err := NewMessage(
+		"Subject",
+		"Dmitrys <dmitrys@xyzrd.com>",
+		[]string{
+			"I am<sedykh@gmail.com>",
+			"I am too <dmitrys@xyzrd.com>",
+			"d3@yandex.ru"},
+		[]string{"Дмитрий Седых <d3@yandex.ru>"},
+		[]byte("body text"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	msg.parts[_body].header.Set("Content-Transfer-Encoding", "bad")
+
+	if msg.writeTo(ioutil.Discard) == nil {
+		t.Fatal("unsupported body transform encoding")
+	}
+}
