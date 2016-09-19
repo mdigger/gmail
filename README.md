@@ -10,41 +10,42 @@ You need to register the app on the Google server and get the configuration file
 
 ### Message send example
 
-	package main
+```go
+package main
 
-	import (
-		"io/ioutil"
-		"log"
+import (
+	"io/ioutil"
+	"log"
 
-		"github.com/mdigger/gmail"
-	)
+	"github.com/mdigger/gmail"
+)
 
-	func main() {
-		// initialize the library
-		if err := gmail.Init("config.json", "token.json"); err != nil {
-			log.Fatal(err)
-		}
-		// create a new message
-		msg, err := gmail.NewMessage(
-			"Subject", // subject
-			"me",      // from
-			[]string{"Test User <test@example.com>"}, // to
-			nil, // cc
-			[]byte(`<html><p>body text</p></html>`), // message body
-		)
-		if err != nil {
-			log.Fatal(err)
-		}
-		// attach file
-		if err = msg.AddFile("README.md"); err != nil {
-			log.Fatal(err)
-		}
-		// send a message
-		if err := msg.Send(); err != nil {
-			log.Fatal(err)
-		}
+func main() {
+	// initialize the library
+	if err := gmail.Init("config.json", "token.json"); err != nil {
+		log.Fatal(err)
 	}
-
+	// create a new message
+	msg, err := gmail.NewMessage(
+		"Subject", // subject
+		"me",      // from
+		[]string{"Test User <test@example.com>"}, // to
+		nil, // cc
+		[]byte(`<html><p>body text</p></html>`), // message body
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// attach file
+	if err = msg.AddFile("README.md"); err != nil {
+		log.Fatal(err)
+	}
+	// send a message
+	if err := msg.Send(); err != nil {
+		log.Fatal(err)
+	}
+}
+```
 
 ### Registration procedure
 
